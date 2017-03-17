@@ -21,6 +21,47 @@
   }
 
 
+
+
+  .year  {
+   fill:none;
+    stroke: red;
+    stroke-width: 2px;
+    stroke-opacity:0.6;
+    shape-rendering: geometricPrecision;
+
+
+  }
+
+  #year-2017 {
+stroke-opacity:1;
+    stroke: #0078A9;
+    stroke-width: 6px;
+  }
+
+  #year-2011 {
+
+    stroke: #ffbc42;
+  }
+
+   #year-2009 {
+
+    stroke: #d81159;
+  }
+
+  #year-1997 {
+
+    stroke: #8f2d56;
+  }
+
+   #year-1950 {
+
+    stroke: #73d2de;
+  }
+
+ 
+
+
   
   .g-source {
    padding: .5em 1em;
@@ -52,7 +93,7 @@
     stroke: #eee;
     stroke: 2px solid #eee;
     shape-rendering: crispEdges;
-    stroke-width: 1px;
+    stroke-width: 0px;
   }
   .axis text {
     font-size: .9em;
@@ -84,23 +125,77 @@
   .focus circle {
     fill: #5e8dc9;
   }
+
+ #legend {
+list-style-type: none;
+
+
+
+  }
+
+  #legend li {
+display: inline-block;
+text-align: center;
+padding:5px;
+
+
+  }
+
+   #legend-1950  {
+border: 3px solid #73d2de;
+  }
+
+  #legend-1997  {
+border: 3px solid #8f2d56;
+  }
+
+  #legend-2009  {
+border: 3px solid #d81159;
+  }
+
+
+#legend-2011  {
+border: 3px solid #ffbc42;
+  }
+
+  #legend-2017  {
+border: 3px solid #0078A9;
+  }
+
+
+
+
+
+  
 </style>
 
 <body>
   <h5 class="g-hed">The water is <span class="Todayslevels" style="color:#0078A9"></span> feet above James Avenue datum</h5>
   
   <p class="g-intro"></p>
+  <ul id="legend">
+  <li id = "legend-1950">1950</li>
+  <li id = "legend-1997">1997</li>
+  <li id = "legend-2009">2009</li>
+  <li id = "legend-2011">2011</li>
+  <li id = "legend-2017">2017</li>
+
+
+
+
+  </ul>
+
+
   <div class="g-chart"></div>
     <div class="g-source"><span class="g-source-bold"></span><span class="g-source-reg"></span></div>
   </div>
 </body>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
-<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 
 <script>
 //Margin conventions
-var margin = {top: 20, right: 70, bottom: 40, left: 35};
+var margin = {top: 20, right: 70, bottom: 40, left: 50};
 var widther = window.outerWidth;
 var width = widther - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
@@ -185,19 +280,26 @@ d3.select(".Todayslevels").text("9.5");
         .key(function(d) {return d.year;})
         .entries(data);
 
-
-           var color = d3.scale.category10();
+    var color = d3.scale.category10();
 
     // Loop through each year / key
-    dataNest.forEach(function(d) {
+ dataNest.forEach(function(d) {
 
-        svg.append("path")
-            .attr("class", "line")
-            .style("stroke", function() { // Add dynamically
-                return d.color = color(d.key); })
-            .attr("d", line(d.values));
 
-    });
+    svg.append("path")
+        .attr("class", function() {
+            var thisClassList = "year";
+            return thisClassList;
+         })
+        .attr("id", function() {
+            var thisID = "year-" + d.key;
+            return thisID;
+         })
+      .attr("d", line(d.values));
+
+});
+
+
 
 
 
@@ -216,6 +318,9 @@ d3.select(".Todayslevels").text("9.5");
     .datum(data)
     .attr("class", "line")
     .attr("d", line);     
+
+
+
   //Tooltips
   var focus = svg.append("g")
       .attr("class", "focus")
@@ -232,9 +337,8 @@ d3.select(".Todayslevels").text("9.5");
   svg.append("text")
             .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
             .attr("class", "g-intro")
-            .attr("transform", "translate("+ (margin.left/2) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+            .attr("transform", "translate("+ (-margin.left/2 - 5) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
             .text("feet");
-
 
 
 
@@ -275,8 +379,8 @@ d3.select(".Todayslevels").text("9.5");
     .text("Live data source: Water Survey of Canada/Environment Canada via the City of Winnipeg")
     .attr("class", "g-source-reg"); 
       
-  //RESPONSIVENESS
-  d3.select(window).on("resize", resized);
+ //RESPONSIVENESS
+ // d3.select(window).on("resize", resized);
   function resized() {
     //new margin
     var newMargin = {top: 10, right: 80, bottom: 20, left: 50};
@@ -318,4 +422,5 @@ function numTicks(widther) {
     console.log("return 5")
   }
 }
+
 </script>
