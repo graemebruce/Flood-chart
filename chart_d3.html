@@ -6,34 +6,43 @@
 <style type="text/css">
   /*css to go here*/
   body {
-    font-family: sans-serif;
+        font-family: "Open Sans",sans-serif;
     font-size: 12px;
   }
   .g-hed {
-    text-align: left;
-    text-transform: uppercase;
+    text-align: center;
     font-weight: bold;
     font-size:22px; 
     margin: 3px 0;
   }
-  .g-source-bold {
-    text-align: left;
-    font-size:10px;
-    font-weight: bold; 
+
+  .Todayslevels span {
+    color: "#fffff";
   }
+
+
+  
   .g-source {
-    margin: 10px 0;
+   padding: .5em 1em;
+    text-align: left;
+    background: #eee;
+    font-size: .8em;
   }
   .g-source-bold {
     text-align: left;
     font-size:10px; 
   }
   .g-intro {
-    font-size: 16px;
-    margin: 0px 0px 10px 0px;
+
+    font-weight: 400;
+    font-size: .9em;
+    color: #777;
+    margin-top: 2em;
+    text-align: center;
+    fill : #777;
   }
   .g-labels {
-    font-family: 'Proxima-Nova', sans-serif;
+
     fill: white;
     font-weight: bold;
     font-size: 14px;
@@ -46,7 +55,6 @@
     stroke-width: 1px;
   }
   .axis text {
-    font-family: sans-serif;
     font-size: .9em;
     pointer-events: none;
     fill: #555;
@@ -62,9 +70,9 @@
 
 
   .line {
-    stroke: #00577B;
-    stroke-width: 3px;
+    stroke-width: 1.5px;
     fill: none;
+
   }
   .overlay {
     fill: none;
@@ -79,7 +87,8 @@
 </style>
 
 <body>
-  <h5 class="g-hed"></h5>
+  <h5 class="g-hed">The water is <span class="Todayslevels" style="color:#0078A9"></span> feet above James Avenue datum</h5>
+  
   <p class="g-intro"></p>
   <div class="g-chart"></div>
     <div class="g-source"><span class="g-source-bold"></span><span class="g-source-reg"></span></div>
@@ -96,9 +105,9 @@ var widther = window.outerWidth;
 var width = widther - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 //Parses date for correct time format
-var parseDate = d3.time.format("%Y-%m").parse;
+var parseDate = d3.time.format("%d/%m").parse;
 //Divides date for tooltip placement
-var bisectDate = d3.bisector(function(d) { return d.date; }).left;    
+var bisectDate = d3.bisector(function(d) { return d.day; }).left;    
 //Appends the svg to the chart-container div
 var svg = d3.select(".g-chart").append("svg")
   .attr("width", width + margin.left + margin.right)
@@ -124,37 +133,76 @@ var xAxis = d3.svg.axis()
   .orient("bottom")
   .tickSize(height)
   .ticks(numTicks(width))
-  .tickFormat(d3.time.format("%m/%Y")); 
+  .tickFormat(d3.time.format("%d %b")); 
 //line function convention (feeds an array)
 var line = d3.svg.line()
-  .x(function(d) { return xScale(d.date); })
-  .y(function(d) { return yScale(d.num); });
+  .x(function(d) { return xScale(d.day); })
+  .y(function(d) { return yScale(d.level); });
+
+
+     
 
 
 var area = d3.svg.area()
-    .x(function(d) { return x(d.date); })
+    .x(function(d) { return x(d.day); })
     .y0(height)
     .y1(function(d) { return y(d.close); }); 
+
+
+
 //Loads the data
-d3.csv("linetemplate.csv", ready);
+d3.csv("water_levels.csv", ready);
 function ready(err, data) {
-  if (err) throw "error loading data";
-  console.log("hello");
+
   //FORMAT data
   data.forEach(function(d) {
-    d.num = +d.num;
-    d.date = parseDate(d.date);
+    d.level = +d.level;
+    d.day = parseDate(d.day);
+
+
   });
-  console.log(data);
+
+ 
+  
+  //Appends latest value
+
+  //??
+d3.select(".Todayslevels").text("9.5");
+
+
   //Appends chart headline
-  d3.select(".g-hed").text("Flood levels");
+  // d3.select(".g-hed").text("Flood levels");
   //Appends chart intro text
-  d3.select(".g-intro").text("Chart intro text goes here. Write a short sentence describing the chart here.");
-  data.sort(function(a,b) { return a.date - b.date; });
+  d3.select(".g-intro").text("HEY! 2017 numbers are in here by hand. This is where it will say when the widget's been updated. Also, that 9.5 up there isn't dynamic because reasons. And it's not right. Or at least if it is, it's by accident.");
+  data.sort(function(a,b) { return a.day - b.day; });
   //Defines the xScale max
-  xScale.domain(d3.extent(data, function(d) { return d.date; }));
+  xScale.domain(d3.extent(data, function(d) { return d.day; }));
   //Defines the yScale max
-  yScale.domain(d3.extent(data, function(d) { return d.num; }));
+  yScale.domain(d3.extent(data, function(d) { return d.level; }));
+
+   // Nest the entries by year
+    var dataNest = d3.nest()
+        .key(function(d) {return d.year;})
+        .entries(data);
+
+
+           var color = d3.scale.category10();
+
+    // Loop through each year / key
+    dataNest.forEach(function(d) {
+
+        svg.append("path")
+            .attr("class", "line")
+            .style("stroke", function() { // Add dynamically
+                return d.color = color(d.key); })
+            .attr("d", line(d.values));
+
+    });
+
+
+
+
+
   //Appends the y axis
   var yAxisGroup = svg.append("g")
     .attr("class", "y axis")
@@ -178,9 +226,29 @@ function ready(err, data) {
   //Adds text to focus point on line    
   focus.append("text")
       .attr("x", 9)
-      .attr("dy", ".35em");    
+      .attr("dy", ".35em");  
+
+// axis labels
+  svg.append("text")
+            .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+            .attr("class", "g-intro")
+            .attr("transform", "translate("+ (margin.left/2) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+            .text("feet");
+
+
+
+
+
+
+
+
+
+
+
+
+
   
-  //Creates larger area for tooltip   
+ /* //Creates larger area for tooltip   
   var overlay = svg.append("rect")
       .attr("class", "overlay")
       .attr("width", width)
@@ -195,17 +263,17 @@ function ready(err, data) {
         i = bisectDate(data, x0, 1),
         d0 = data[i - 5],
         d1 = data[i],
-        d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-    focus.attr("transform", "translate(" + xScale(d.date) + "," + yScale(d.num) + ")");
-    focus.select("text").text(d.num);
+        d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+    focus.attr("transform", "translate(" + xScale(d.day) + "," + yScale(d.level) + ")");
+    focus.select("text").text(d.level);
   }; 
+
+  
+  */
   //Appends chart source
-  d3.select(".g-source-bold")
-    .text("SOURCE: ")
-    .attr("class", "g-source-bold");
   d3.select(".g-source-reg")
-    .text("Chart source info goes here")
-    .attr("class", "g-source-reg");  
+    .text("Live data source: Water Survey of Canada/Environment Canada via the City of Winnipeg")
+    .attr("class", "g-source-reg"); 
       
   //RESPONSIVENESS
   d3.select(window).on("resize", resized);
@@ -223,8 +291,8 @@ function ready(err, data) {
       .range([0, w - newMargin.right]);
     //Update the line
     line = d3.svg.line()
-      .x(function(d) { return xScale(d.date); })
-      .y(function(d) { return yScale(d.num); }); 
+      .x(function(d) { return xScale(d.day); })
+      .y(function(d) { return yScale(d.level); }); 
     d3.selectAll('.line')
       .attr("d", line);  
     //Updates xAxis
