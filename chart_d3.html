@@ -27,6 +27,7 @@
 
   font-size: 12px;
     font-weight: bold;
+    fill: #00577B;
 
 
 }
@@ -40,21 +41,21 @@
 }
 #year-2017 {
   stroke-opacity: 1;
-  stroke: orange;
+  stroke: #00577B;
   opacity: 1;
   stroke-width: 2px;
 }
 #year-2011 {
-  stroke: blue;
+  stroke: #a65628;
 }
 #year-2009 {
-  stroke: red;
+  stroke: #984ea3;
 }
 #year-1997 {
-  stroke: green;
+  stroke: #4daf4a;
 }
 #year-1950 {
-  stroke: purple;
+  stroke: #e41a1c;
 }
 .g-source {
   padding: .5em 1em;
@@ -132,13 +133,9 @@ width:100;
 <script>
 //Margin conventions
 var margin = {top: 20, right: 70, bottom: 40, left: 50};
-
 var widther = document.getElementById("graph-container").clientWidth;
-
 var width = widther - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
-
-
 //Parses date for correct time format
 var parseDate = d3.time.format("%d/%m").parse;
 //Divides date for tooltip placement
@@ -146,7 +143,12 @@ var bisectDate = d3.bisector(function(d) {
   return d.day;
 }).left;
 //Appends the svg to the chart-container div
-var svg = d3.select(".g-chart").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom).attr("id", "svg-graph").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var svg = d3.select(".g-chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
 
@@ -180,21 +182,18 @@ var area = d3.svg.area().x(function(d) {
 
 
 //Loads the data
-d3.csv("https://s3.ca-central-1.amazonaws.com/data-test123456/water_levels.csv", ready);
+d3.csv("https://s3.ca-central-1.amazonaws.com/data-test123456/water_levels+(2).csv", ready);
 
 function ready(err, data) {
-  //FORMAT data
+
+  //Format data
   data.forEach(function(d) {
     d.level = +d.level;
     d.day = parseDate(d.day);
   });
   //Appends latest value to headline
-  d3.select(".Todayslevels").text("9.5");
-  //Appends chart intro text
-  d3.select(".g-intro").text("intro text");
-  data.sort(function(a, b) {
-    return a.day - b.day;
-  });
+  d3.select(".Todayslevels").text(data[data.length - 1].level);
+
   //Defines the xScale max
   xScale.domain(d3.extent(data, function(d) {
     return d.day;
@@ -222,13 +221,6 @@ function ready(err, data) {
     // var numberOfDataPoints = d.values.length;
     // var labelPositionSourceValue = d.values[numberOfDataPoints - 1];
     // tmp vars to track the max value and index
-
-
-
-
-
-
-
     var valuesArray = d.values;
     var currentYear = d.key;
     var currentMaxDay = '';
@@ -236,7 +228,7 @@ function ready(err, data) {
     var currentMaxCounter = 0;
     for (var i in valuesArray) {
       if (valuesArray[i].level > currentMaxValue) {
-        currentMaxDay = valuesArray[i].day
+        currentMaxDay = valuesArray[i].day;
         currentMaxValue = valuesArray[i].level;
         currentMaxCounter = i;
       }
@@ -256,34 +248,42 @@ function ready(err, data) {
     }).style("opacity", 1).attr("dy", "-.7em").attr("dx", "0em").attr("text-anchor", "middle").text(labelText);
   });
   //Appends the y axis
-  var yAxisGroup = svg.append("g").attr("class", "y axis").call(yAxis)
- ;
+  var yAxisGroup = svg.append("g").attr("class", "y axis").call(yAxis);
   //Appends the x axis    
   var xAxisGroup = svg.append("g").attr("class", "x axis").attr("transform", "translate(0," + height + ")").call(xAxis);
   //Binds the data to the line
   var drawline = svg.append("path").datum(data).attr("class", "line").attr("d", line);
-  //Tooltips
-  //Adds circle to focus point on line
-  //Adds text to focus point on line    
-  // axis labels
-  svg.append("text").attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to the anchor
+
+  svg.append("text").attr("text-anchor", "middle") // 
     .attr("class", "g-intro").attr("transform", "translate(" + (-margin.left / 2 - 5) + "," + (height / 2) + ")rotate(-90)") // text is drawn off the screen top left, move down and out and rotate
     .text("feet");
   //Appends chart source
   d3.select(".g-source-reg").text("Live data source: Water Survey of Canada/Environment Canada via the City of Winnipeg").attr("class", "g-source-reg");
   //RESPONSIVENESS
 
+d3.select("div#chartId")
+   .append("div")
+   .classed("svg-container", true) //container class to make it responsive
+   .append("svg")
+   //responsive SVG needs these 2 attributes and no width and height attr
+   .attr("preserveAspectRatio", "xMinYMin meet")
+   .attr("viewBox", "0 0 600 400")
+   //class to make it responsive
+   .classed("svg-content-responsive", true); 
 
 
-  
+
+  d3.select(window).on("resize", resized);
 
   function resized() {
 
     //new margin
     var newMargin = {top: 10, right: 80, bottom: 20, left: 50};
 
+      console.log(newMargin);
+
     //Get the width of the window
-    var w = d3.select("#graph-container").node().clientWidth;
+    var w = d3.select(".g-chart").node().clientWidth;
     console.log("resized", w);
 
     //Change the width of the svg
@@ -296,8 +296,8 @@ function ready(err, data) {
 
     //Update the line
     line = d3.svg.line()
-      .x(function(d) { return xScale(d.date); })
-      .y(function(d) { return yScale(d.num); }); 
+      .x(function(d) { return xScale(d.day); })
+      .y(function(d) { return yScale(d.level); }); 
 
     d3.selectAll('.line')
       .attr("d", line);  
@@ -315,21 +315,21 @@ function ready(err, data) {
     //Updates yAxis  
     yAxis
       .tickSize(-w - newMargin.right)
-  };
+  }; 
 
-
-
- d3.select(window).on("resize", resized);
 }
+
+
+
 //Determines number of ticks base on width
 function numTicks(widther) {
   if (widther <= 900) {
-    return 4
-    console.log("return 4")
+    return 4;
+    console.log("return 4");
   }
   else {
-    return 12
-    console.log("return 5")
+    return 12;
+    console.log("return 5");
   }
 }
 
